@@ -1,11 +1,12 @@
 package org.example;
 
-import org.dom4j.*;
+import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Namespace;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
 
 public class DChecker implements Checker {
 

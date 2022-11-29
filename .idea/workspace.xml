@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="38285c12-f9e0-402f-9a2d-916dec0d0ffb" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/GOV_ZEP.2.5.080911.Profil XAdES_ZEP - formát ZEP na báze XAdES.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/AChecker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Checker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/DChecker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/InvalidDocumentException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/MChecker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Main.java" afterDir="false" />
-    </list>
+    <list default="true" id="38285c12-f9e0-402f-9a2d-916dec0d0ffb" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -81,7 +71,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1669745373432</updated>
-      <workItem from="1669745375688" duration="10446000" />
+      <workItem from="1669745375688" duration="10904000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -97,7 +87,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669747071429</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Dominik EZ points">
+      <created>1669757326506</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1669757326506</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -106,7 +103,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
     <MESSAGE value="doc" />
-    <option name="LAST_COMMIT_MESSAGE" value="doc" />
+    <MESSAGE value="Dominik EZ points" />
+    <option name="LAST_COMMIT_MESSAGE" value="Dominik EZ points" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>

@@ -1,8 +1,9 @@
 package org.example;
-import org.dom4j.*;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 //kniznica: https://dom4j.github.io/
 //priklady: https://www.tutorialspoint.com/java_xml/java_dom4j_parse_document.htm
 public class Main {
-    private final static String XML_FILE = "priklady/02XadesT.xml";
+    private final static String XML_FILE = "priklady/03XadesT.xml";
     public static void main(String[] args) {
         try {
             // init
