@@ -9,10 +9,11 @@ import java.io.File;
 public class Main {
     private final static String XML_FILE = "priklady/ez_dokument.xml";
     public static void main(String[] args) throws DocumentException {
+        // init read
         File xmlFile = new File(XML_FILE);
         SAXReader reader = new SAXReader();
         Document document = reader.read(xmlFile);
+        // start checking
         Element root = document.getRootElement();
-        System.out.println(root.selectSingleNode("staff").selectSingleNode("bio").getText());
     }
 }
