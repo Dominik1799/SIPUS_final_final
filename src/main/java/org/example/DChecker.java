@@ -1,12 +1,10 @@
 package org.example;
 
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Namespace;
+import org.dom4j.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class DChecker implements Checker {
 
@@ -17,8 +15,40 @@ public class DChecker implements Checker {
     }
 
     public void startCheck() throws InvalidDocumentException {
+        this.checkSignedInfoReferences();
         this.checkRootAttributes();
         this.checkValidAlgorithmURI();
+    }
+
+    private void checkSignedInfoReferences() throws InvalidDocumentException {
+        String ERROR_MSG = "kontrola obsahu ds:Transforms a ds:DigestMethod vo všetkých referenciách v ds:SignedInfo – musia obsahovať URI niektorého z podporovaných algoritmov podľa profilu XAdES_ZEP";
+        String VALID_TRANSFORM_ALGO = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+        Element root = this.document.getRootElement();
+        Element signedInfo = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo']");
+        List<Node> transforms = signedInfo.selectNodes("//*[name() = 'ds:Transform']");
+        List<Node> digestMethods = signedInfo.selectNodes("//*[name() = 'ds:DigestMethod']");
+        // check signed info
+        for (Node transform : transforms) {
+            Element t = (Element) transform;
+            Attribute algo = t.attribute("Algorithm");
+            if (algo == null || !algo.getValue().equals(VALID_TRANSFORM_ALGO)) {
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+        }
+        // now check DigestMethod
+        HashSet<String> checkSet = new HashSet<>();
+        checkSet.add("http://www.w3.org/2000/09/xmldsig#sha1");
+        checkSet.add("http://www.w3.org/2001/04/xmldsigmore#sha224");
+        checkSet.add("http://www.w3.org/2001/04/xmldsigmore#sha384");
+        checkSet.add("http://www.w3.org/2001/04/xmlenc#sha512");
+        checkSet.add("http://www.w3.org/2001/04/xmlenc#sha256");
+        for (Node method : digestMethods) {
+            Element m = (Element) method;
+            Attribute algo = m.attribute("Algorithm");
+            if (algo == null || !checkSet.contains(algo.getValue())) {
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+        }
     }
 
     // specifikacia XADESU strana 16
