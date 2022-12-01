@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="38285c12-f9e0-402f-9a2d-916dec0d0ffb" name="Changes" comment="" />
+    <list default="true" id="38285c12-f9e0-402f-9a2d-916dec0d0ffb" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -71,7 +73,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1669745373432</updated>
-      <workItem from="1669745375688" duration="10904000" />
+      <workItem from="1669745375688" duration="11732000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -94,7 +96,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669757326506</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="import fix">
+      <created>1669757819582</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1669757819582</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -104,7 +113,8 @@
     <MESSAGE value="init" />
     <MESSAGE value="doc" />
     <MESSAGE value="Dominik EZ points" />
-    <option name="LAST_COMMIT_MESSAGE" value="Dominik EZ points" />
+    <MESSAGE value="import fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="import fix" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>
