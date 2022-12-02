@@ -5,6 +5,15 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 
 public class AChecker implements Checker{
@@ -13,6 +22,7 @@ public class AChecker implements Checker{
     final String ERR_MSG_01 = "ds:SignatureProperties musí obsahovať dva elementy ds:SignatureProperty pre xzep:SignatureVersion a xzep:ProductInfos";
     final String ERR_MSG_02 = "obidva ds:SignatureProperty musia mať atribút Target nastavený na ds:Signature";
     final String ERR_MSG_03 = "ds:KeyInfo musí obsahovať ds:X509Data, ktorý obsahuje elementy: ds:X509Certificate, ds:X509IssuerSerial, ds:X509SubjectName";
+    final String ERR_MSG_04 = "hodnoty elementov ds:X509IssuerSerial a ds:X509SubjectName nesúhlasia s príslušnými hodnatami v certifikáte, ktorý sa nachádza v ds:X509Certificate";
 
     public AChecker(Document document) {
         this.document = document;
@@ -30,14 +40,30 @@ public class AChecker implements Checker{
 
         checkIdAttribute(dsKeyInfo);
         Element dsX509Data = getElementByParent(dsKeyInfo, "ds:X509Data");
+        X509Certificate cert;
+        String issuerName;
+        String serialNumber;
+        String subjectName;
 
         try {
             Element dsX509Certificate = getElementByParent(dsX509Data, "ds:X509Certificate");
             Element dsX509IssuerSerial = getElementByParent(dsX509Data, "ds:X509IssuerSerial");
-            Element dsX509SubjectName = getElementByParent(dsX509Data, "ds:X509SubjectName");
+
+            byte[] decoded = Base64.getDecoder().decode(dsX509Certificate.getText().getBytes());
+            cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(decoded));
+
+            issuerName = getElementByParent(dsX509IssuerSerial, "ds:X509IssuerName").getText();
+            serialNumber = getElementByParent(dsX509IssuerSerial, "ds:X509SerialNumber").getText();
+            subjectName = getElementByParent(dsX509Data, "ds:X509SubjectName").getText();
 
         } catch (InvalidDocumentException e) {
             throw new InvalidDocumentException(ERR_MSG_03);
+        } catch (CertificateException e) {
+            throw new RuntimeException(e);
+        }
+        if (!subjectName.equals(cert.getSubjectX500Principal().toString()) ||
+            !serialNumber.equals(cert.getSerialNumber().toString()) || !compareIssuerName(issuerName, cert.getIssuerX500Principal().toString())) {
+            throw new InvalidDocumentException(ERR_MSG_04);
         }
     }
 
@@ -81,5 +107,12 @@ public class AChecker implements Checker{
         if (elementId == null || elementId.getValue().equals("")) {
             throw new InvalidDocumentException("ds:" + element.getName() + " musí mať Id atribút");
         }
+    }
+
+    private boolean compareIssuerName(String issuerName1, String issuerName2) {
+        issuerName1 = issuerName1.replace("ST", "S");
+        issuerName2 = issuerName2.replace("ST", "S");
+
+        return issuerName1.equals(issuerName2);
     }
 }
