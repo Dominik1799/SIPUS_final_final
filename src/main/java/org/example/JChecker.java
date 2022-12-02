@@ -31,7 +31,6 @@ public class JChecker implements Checker{
         }
 
         Attribute dsSignatureId = dsSignature.attribute("Id");
-        // TODO: Id - ds:Signature element je referencovaný z elementu xades:QualifyingProperties, atribút Target(check reference)???
         // tested on documents 03(valid) and 05(invalid)
         if (dsSignatureId == null || dsSignatureId.getValue().equals("")) {
             throw new InvalidDocumentException("ds:Signature musí mať Id atribút");
@@ -54,7 +53,6 @@ public class JChecker implements Checker{
         }
 
         Attribute dsSignatureValueId = dsSignatureValue.attribute("Id");
-        // TODO: Id – element ds:SignatureValue je referencovaný z elementu xades:SignatureTimeStamp(check reference)???
         // tested on documents 03(valid) and 06(invalid)
         if (dsSignatureValueId == null || dsSignatureValueId.getValue().equals("")) {
            throw new InvalidDocumentException("ds:SignatureValue – musí mať Id atribút");
