@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 //kniznica: https://dom4j.github.io/
 //priklady: https://www.tutorialspoint.com/java_xml/java_dom4j_parse_document.htm
 public class Main {
-    private final static String XML_FILE = "priklady/06XadesT.xml";
+    private final static String XML_FILE = "priklady/04XadesT.xml";
     public static void main(String[] args) {
         try {
             // init
@@ -24,10 +24,10 @@ public class Main {
             Checker mChecker = new MChecker(document);
 
             // start checking
-            // dChecker.startCheck();
-            // aChecker.startCheck();
+            dChecker.startCheck();
+            aChecker.startCheck();
             jChecker.startCheck();
-            // mChecker.startCheck();
+            mChecker.startCheck();
 
             // if we get here, no exceptions occured == document is valid
             System.out.println("Dokument je platny");
