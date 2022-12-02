@@ -12,6 +12,7 @@ public class AChecker implements Checker{
 
     final String ERR_MSG_01 = "ds:SignatureProperties musí obsahovať dva elementy ds:SignatureProperty pre xzep:SignatureVersion a xzep:ProductInfos";
     final String ERR_MSG_02 = "obidva ds:SignatureProperty musia mať atribút Target nastavený na ds:Signature";
+    final String ERR_MSG_03 = "ds:KeyInfo musí obsahovať ds:X509Data, ktorý obsahuje elementy: ds:X509Certificate, ds:X509IssuerSerial, ds:X509SubjectName";
 
     public AChecker(Document document) {
         this.document = document;
@@ -29,6 +30,15 @@ public class AChecker implements Checker{
 
         checkIdAttribute(dsKeyInfo);
         Element dsX509Data = getElementByParent(dsKeyInfo, "ds:X509Data");
+
+        try {
+            Element dsX509Certificate = getElementByParent(dsX509Data, "ds:X509Certificate");
+            Element dsX509IssuerSerial = getElementByParent(dsX509Data, "ds:X509IssuerSerial");
+            Element dsX509SubjectName = getElementByParent(dsX509Data, "ds:X509SubjectName");
+
+        } catch (InvalidDocumentException e) {
+            throw new InvalidDocumentException(ERR_MSG_03);
+        }
     }
 
     private void checkSignatureProperties() throws InvalidDocumentException {
