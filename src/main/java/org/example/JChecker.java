@@ -1,13 +1,18 @@
 package org.example;
 
 import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.asn1.x509.Certificate;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.DefaultAlgorithmNameFinder;
 import org.bouncycastle.tsp.TSPException;
 import org.bouncycastle.tsp.TimeStampToken;
 import org.bouncycastle.tsp.TimeStampTokenInfo;
+import org.bouncycastle.util.CollectionStore;
+import org.bouncycastle.util.Store;
 import org.dom4j.*;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -166,8 +171,30 @@ public class JChecker implements Checker{
         TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(decodedTimestampToken));
 
         // TODO: overit overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow a voči platnému poslednému CRL
+        checkSignedCertExpiry(token);
 
         compareMessageImprintWithDsSignatureValue(token, root);
+    }
+
+    private void checkSignedCertExpiry(TimeStampToken token) throws InvalidDocumentException {
+        BigInteger signerSerialNum = token.getSID().getSerialNumber();
+
+        Store<X509CertificateHolder> timestampCerts = token.getCertificates();
+        Iterator<?> iterator = ((CollectionStore<?>) timestampCerts).iterator();
+        X509CertificateHolder signerCert = null;
+
+        while (iterator.hasNext()) {
+            X509CertificateHolder certificateHolder = (X509CertificateHolder) iterator.next();
+
+            if (Objects.equals(certificateHolder.getSerialNumber(), signerSerialNum)) {
+                signerCert = certificateHolder;
+            }
+        }
+
+        if (signerCert == null) {
+            throw new InvalidDocumentException("overenie platnosti podpisového certifikátu časovej pečiatky voči času" +
+                    " UtcNow a voči platnému poslednému CRL (nenasiel sa certifikat s " + signerSerialNum + " seriovym cislom");
+        }
     }
 
     // TODO: all documents are valid according this rule
