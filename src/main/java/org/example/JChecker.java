@@ -1,7 +1,6 @@
 package org.example;
 
 import org.bouncycastle.asn1.cms.ContentInfo;
-import org.bouncycastle.asn1.x509.Certificate;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.DefaultAlgorithmNameFinder;
 import org.bouncycastle.tsp.TSPException;
@@ -29,8 +28,8 @@ public class JChecker implements Checker{
     public void startCheck() throws InvalidDocumentException, IOException, NoSuchAlgorithmException, TSPException {
         // checkDsSignature();
         // checkDsSignatureValue();
-        // checkDsManifestElements();
-        checkTimestamp();
+        checkDsManifestElements();
+        // checkTimestamp();
     }
 
     // specifikacia XADESU strana 17
@@ -73,7 +72,9 @@ public class JChecker implements Checker{
         }
     }
 
-    // specifikacia strana 25
+    // not valid:
+    // valid: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+    // specifikacia strana 27
     private void checkDsManifestElements() throws InvalidDocumentException {
         Element root =  this.document.getRootElement();
         List<Node> manifestNodes = root.selectNodes("//*[name() = 'ds:Manifest']");
@@ -87,30 +88,40 @@ public class JChecker implements Checker{
                 throw new InvalidDocumentException("každý ds:Manifest element musí mať Id atribút");
             }
 
-            checkDsTransforms(manifest);
-            checkDsDigestMethod(manifest);
-            // TODO: overenie hodnoty Type atribútu voci profilu XAdES_ZEP - nie je ako atribut v ds:Manifest ale v ds:Manifest > ds:Reference
-            // TODO: kazdy ds:Manifest element musi obsahovat prave jednu referenciu na ds:Object, samotny ds:Manifest neobsahuje URI s referenciou, ale ds:Manifest > ds:Reference
+            List<Node> referenceNodes = manifest.selectNodes("ds:Reference");
+            if (referenceNodes.size() != 1) {
+                throw new InvalidDocumentException("každý ds:Manifest element musí obsahovať práve jednu referenciu na ds:Object");
+            }
+            Element reference = (Element) referenceNodes.get(0);
+
+            checkDsTransforms(reference);
+            checkDsDigestMethod(reference);
+            checkDsReferenceTypeAttribute(reference);
+            checkDsReferenceURIToDsObject(reference);
         }
     }
 
     // specifikacia strana 26
-    private void checkDsTransforms(Element manifest) throws InvalidDocumentException {
+    private void checkDsTransforms(Element reference) throws InvalidDocumentException {
         ArrayList<String> validTransformAlgorithms = new ArrayList<>(2);
         validTransformAlgorithms.add("http://www.w3.org/TR/2001/REC-xml-c14n-20010315");
         validTransformAlgorithms.add("http://www.w3.org/2000/09/xmldsig#base64");
 
         // check if all ds:Transform elements in ds:Transforms element contains valid transformation algorithm
-        Element dsTransforms = (Element) manifest.selectSingleNode("//*[name() = 'ds:Transforms']");
-
+        Element dsTransforms = (Element) reference.selectSingleNode("ds:Transforms");
         if (dsTransforms == null) {
             throw new InvalidDocumentException("ds:Transforms musí byť z množiny podporovaných algoritmov pre" +
                     " daný element podľa profilu XAdES_ZEP (ds:Manifest neobsahuje ds:Transforms)");
         }
 
-        for (Iterator<Element> it = dsTransforms.elementIterator("//*[name() = 'ds:Transform']"); it.hasNext();) {
-            Element dsTransform = it.next();
-            Attribute dsTransformAlgorithm = dsTransform.attribute("Algorithm");
+        List<Node> dsTransformElements = dsTransforms.selectNodes("ds:Transform");
+        if (dsTransformElements.size() == 0) {
+            throw new InvalidDocumentException("ds:Transforms musí byť z množiny podporovaných algoritmov pre" +
+                    " daný element podľa profilu XAdES_ZEP (ds:Transforms neobsahuje ds:Transform)");
+        }
+
+        for (Node dsTransform : dsTransformElements) {
+            Attribute dsTransformAlgorithm =  ((Element)dsTransform).attribute("Algorithm");
 
             if (dsTransformAlgorithm == null) {
                 throw new InvalidDocumentException("ds:Transforms musí byť z množiny podporovaných algoritmov pre" +
@@ -126,17 +137,17 @@ public class JChecker implements Checker{
     }
 
     // specifikacia strana 27 a 37
-    private void checkDsDigestMethod(Element manifest) throws InvalidDocumentException {
+    private void checkDsDigestMethod(Element reference) throws InvalidDocumentException {
         String[] validDigestMethodAlgorithms = {
                 "http://www.w3.org/2000/09/xmldsig#sha1",
                 "http://www.w3.org/2001/04/xmldsig-more#sha224",
-                "https://www.w3.org/2001/04/xmldsig-more#sha384",
+                "http://www.w3.org/2001/04/xmlenc#sha256",
                 "http://www.w3.org/2001/04/xmldsig-more#sha384",
                 "http://www.w3.org/2001/04/xmlenc#sha512"
         };
         List<String> validDigestMethodAlgsList = Arrays.asList(validDigestMethodAlgorithms);
 
-        Element dsDigestMethod = (Element) manifest.selectSingleNode("//*[name() = 'ds:DigestMethod']");
+        Element dsDigestMethod = (Element) reference.selectSingleNode("ds:DigestMethod");
         if (dsDigestMethod == null) {
             throw new InvalidDocumentException("ds:DigestMethod – musí obsahovať URI niektorého z podporovaných" +
                     " algoritmov podľa profilu XAdES_ZEP (chyba ds:DigestMethod)");
@@ -156,6 +167,29 @@ public class JChecker implements Checker{
         }
     }
 
+    private void checkDsReferenceTypeAttribute(Element reference) throws InvalidDocumentException {
+        Attribute referenceType = reference.attribute("Type");
+
+        if (referenceType == null || !referenceType.getValue().equals("http://www.w3.org/2000/09/xmldsig#Object")) {
+            throw new InvalidDocumentException("overenie ds:Manifest elementov: overenie hodnoty Type atribútu voči profilu XAdES_ZEP");
+        }
+    }
+
+    private void checkDsReferenceURIToDsObject(Element reference) throws InvalidDocumentException {
+        Attribute referenceURI = reference.attribute("URI");
+
+        if (referenceURI == null) {
+            throw new InvalidDocumentException("každý ds:Manifest element musí obsahovať práve jednu referenciu na ds:Object");
+        }
+
+        String valueURI = referenceURI.getValue();
+        Element dsObject = (Element) reference.selectSingleNode("//ds:Object[@Id=substring-after(" + "'" + valueURI + "'" + ", '#')]");
+
+        if (dsObject == null) {
+            throw new InvalidDocumentException("každý ds:Manifest element musí obsahovať práve jednu referenciu na ds:Object");
+        }
+    }
+
     private void checkTimestamp() throws InvalidDocumentException, TSPException, IOException, NoSuchAlgorithmException {
         Element root =  this.document.getRootElement();
         Element encapsulatedTimeStamp = (Element) root.selectSingleNode("//*[name() = 'xades:EncapsulatedTimeStamp']");
@@ -171,7 +205,7 @@ public class JChecker implements Checker{
         TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(decodedTimestampToken));
 
         // TODO: overit overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow a voči platnému poslednému CRL
-        checkSignedCertExpiry(token);
+        // checkSignedCertExpiry(token);
 
         compareMessageImprintWithDsSignatureValue(token, root);
     }

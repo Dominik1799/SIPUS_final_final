@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="check MessageImprint and SignatureValue">
+    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="getting signerCert from timestamp token">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/OvereniePodpisu.doc" beforeDir="false" afterPath="$PROJECT_DIR$/OvereniePodpisu.doc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -47,7 +48,7 @@
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "reference.projectsettings.compiler.javacompiler"
+    "settings.editor.selected.configurable": "Console"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -79,7 +80,8 @@
       <updated>1669745373432</updated>
       <workItem from="1669745375688" duration="10904000" />
       <workItem from="1670053780575" duration="12125000" />
-      <workItem from="1670065977671" duration="2755000" />
+      <workItem from="1670065977671" duration="2822000" />
+      <workItem from="1670080104315" duration="7281000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -116,7 +118,14 @@
       <option name="project" value="LOCAL" />
       <updated>1670066915008</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="getting signerCert from timestamp token">
+      <created>1670068759848</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1670068759848</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -139,14 +148,14 @@
     <MESSAGE value="Dominik EZ points" />
     <MESSAGE value="overnie ds:Manifest elementov - ds:Manifest Id, ds:Transforms and ds:DigestMethod" />
     <MESSAGE value="check MessageImprint and SignatureValue" />
-    <option name="LAST_COMMIT_MESSAGE" value="check MessageImprint and SignatureValue" />
+    <MESSAGE value="getting signerCert from timestamp token" />
+    <option name="LAST_COMMIT_MESSAGE" value="getting signerCert from timestamp token" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="org.bouncycastle.asn1.x509.Certificate" memberName="sig" />
         <PinnedItemInfo parentTag="org.bouncycastle.util.CollectionStore" memberName="_local" />
-        <PinnedItemInfo parentTag="org.dom4j.tree.DefaultElement" memberName="content" />
         <PinnedItemInfo parentTag="org.bouncycastle.tsp.TimeStampToken" memberName="tstInfo" />
         <PinnedItemInfo parentTag="org.bouncycastle.tsp.TimeStampToken" memberName="tsaSignerInfo" />
       </pinned-members>
