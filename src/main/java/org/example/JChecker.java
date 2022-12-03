@@ -1,7 +1,15 @@
 package org.example;
 
+import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.operator.DefaultAlgorithmNameFinder;
+import org.bouncycastle.tsp.TSPException;
+import org.bouncycastle.tsp.TimeStampToken;
+import org.bouncycastle.tsp.TimeStampTokenInfo;
 import org.dom4j.*;
 
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class JChecker implements Checker{
@@ -13,10 +21,11 @@ public class JChecker implements Checker{
     }
 
     @Override
-    public void startCheck() throws InvalidDocumentException {
-        checkDsSignature();
-        checkDsSignatureValue();
-        checkDsManifestElements();
+    public void startCheck() throws InvalidDocumentException, IOException, NoSuchAlgorithmException, TSPException {
+        // checkDsSignature();
+        // checkDsSignatureValue();
+        // checkDsManifestElements();
+        checkTimestamp();
     }
 
     // specifikacia XADESU strana 17
@@ -61,13 +70,6 @@ public class JChecker implements Checker{
 
     // specifikacia strana 25
     private void checkDsManifestElements() throws InvalidDocumentException {
-        String CANONICALIZATION_URI = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
-        String BASE64_URI = "http://www.w3.org/2000/09/xmldsig#base64 ";
-
-        ArrayList<String> validTransformAlgorithms = new ArrayList<>(2);
-        validTransformAlgorithms.add(CANONICALIZATION_URI);
-        validTransformAlgorithms.add(BASE64_URI);
-
         Element root =  this.document.getRootElement();
         List<Node> manifestNodes = root.selectNodes("//*[name() = 'ds:Manifest']");
 
@@ -82,7 +84,8 @@ public class JChecker implements Checker{
 
             checkDsTransforms(manifest);
             checkDsDigestMethod(manifest);
-            // TODO: overenie hodnoty Type atribútu voči profilu XAdES_ZEP - nie je ako atribut v ds:Manifest ale v ds:Manifest > ds:Reference
+            // TODO: overenie hodnoty Type atribútu voci profilu XAdES_ZEP - nie je ako atribut v ds:Manifest ale v ds:Manifest > ds:Reference
+            // TODO: kazdy ds:Manifest element musi obsahovat prave jednu referenciu na ds:Object, samotny ds:Manifest neobsahuje URI s referenciou, ale ds:Manifest > ds:Reference
         }
     }
 
@@ -145,6 +148,47 @@ public class JChecker implements Checker{
         if (!validDigestMethodAlgsList.contains(dsDigestMethodAlgorithmValue)) {
             throw new InvalidDocumentException("ds:DigestMethod – musí obsahovať URI niektorého z podporovaných" +
                     " algoritmov podľa profilu XAdES_ZEP");
+        }
+    }
+
+    private void checkTimestamp() throws InvalidDocumentException, TSPException, IOException, NoSuchAlgorithmException {
+        Element root =  this.document.getRootElement();
+        Element encapsulatedTimeStamp = (Element) root.selectSingleNode("//*[name() = 'xades:EncapsulatedTimeStamp']");
+
+        if (encapsulatedTimeStamp == null) {
+            throw new InvalidDocumentException("overenie platnosti podpisového certifikátu časovej pečiatky voči času" +
+                    " UtcNow a voči platnému poslednému CRL (neobsahuje xades:EncapsulatedTimeStamp)");
+        }
+
+        String base64TimestampToken = encapsulatedTimeStamp.getStringValue();
+        byte[] decodedTimestampToken = Base64.getDecoder().decode(base64TimestampToken);
+        // it is only possible to get token from bytes
+        TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(decodedTimestampToken));
+
+        // TODO: overit overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow a voči platnému poslednému CRL
+
+        compareMessageImprintWithDsSignatureValue(token, root);
+    }
+
+    // TODO: all documents are valid according this rule
+    private void compareMessageImprintWithDsSignatureValue(TimeStampToken token, Element root) throws NoSuchAlgorithmException, InvalidDocumentException {
+        // no need to check if dsSignatureValue is null, because it was checked in checkDsSignatureValue
+        Element dsSignatureValue = (Element) root.selectSingleNode("//*[name() = 'ds:SignatureValue']");
+        String dsSignatureValueString = dsSignatureValue.getStringValue();
+        byte[] dsSignatureValueBytes = Base64.getDecoder().decode(dsSignatureValueString);
+
+        TimeStampTokenInfo timestampInfo = token.getTimeStampInfo();
+        byte[] messageImprintBytes = timestampInfo.getMessageImprintDigest();
+
+        DefaultAlgorithmNameFinder nameFinder = new DefaultAlgorithmNameFinder();
+        String algoName = nameFinder.getAlgorithmName(timestampInfo.getMessageImprintAlgOID());
+
+        MessageDigest messageDigest = MessageDigest.getInstance(algoName);
+        byte[] hashedSignatureValue = messageDigest.digest(dsSignatureValueBytes);
+
+        if (!Arrays.equals(hashedSignatureValue, messageImprintBytes)) {
+            throw new InvalidDocumentException("overenie MessageImprint z časovej pečiatky voči podpisu " +
+                    "ds:SignatureValue (zahashovany ds:SignatureValue je iny ako MessageImprint)");
         }
     }
 }

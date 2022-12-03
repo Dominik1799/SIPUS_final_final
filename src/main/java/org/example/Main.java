@@ -1,5 +1,6 @@
 package org.example;
 
+import org.bouncycastle.tsp.TSPException;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
@@ -7,11 +8,12 @@ import org.dom4j.io.SAXReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 
 //kniznica: https://dom4j.github.io/
 //priklady: https://www.tutorialspoint.com/java_xml/java_dom4j_parse_document.htm
 public class Main {
-    private final static String XML_FILE = "priklady/06XadesT.xml";
+    private final static String XML_FILE = "priklady/12XadesT.xml";
     public static void main(String[] args) {
         try {
             // init
@@ -36,7 +38,8 @@ public class Main {
         } catch (InvalidDocumentException e) {
             System.err.println("Dokument nie je validny. Dovod: ");
             System.err.println(e.getMessage());
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException | TSPException e) {
+            System.err.println("Nastal problem s pri vyuziti externej kniznice.");
             throw new RuntimeException(e);
         }
 
