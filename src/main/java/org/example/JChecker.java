@@ -1,6 +1,9 @@
 package org.example;
 
+import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.cert.X509CRLEntryHolder;
+import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.DefaultAlgorithmNameFinder;
 import org.bouncycastle.tsp.TSPException;
@@ -12,6 +15,8 @@ import org.dom4j.*;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -28,8 +33,8 @@ public class JChecker implements Checker{
     public void startCheck() throws InvalidDocumentException, IOException, NoSuchAlgorithmException, TSPException {
         // checkDsSignature();
         // checkDsSignatureValue();
-        checkDsManifestElements();
-        // checkTimestamp();
+        // checkDsManifestElements();
+        checkTimestamp();
     }
 
     // specifikacia XADESU strana 17
@@ -205,12 +210,12 @@ public class JChecker implements Checker{
         TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(decodedTimestampToken));
 
         // TODO: overit overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow a voči platnému poslednému CRL
-        // checkSignedCertExpiry(token);
+        checkSignedCertValidity(token);
 
         compareMessageImprintWithDsSignatureValue(token, root);
     }
 
-    private void checkSignedCertExpiry(TimeStampToken token) throws InvalidDocumentException {
+    private void checkSignedCertValidity(TimeStampToken token) throws InvalidDocumentException, IOException {
         BigInteger signerSerialNum = token.getSID().getSerialNumber();
 
         Store<X509CertificateHolder> timestampCerts = token.getCertificates();
@@ -229,9 +234,36 @@ public class JChecker implements Checker{
             throw new InvalidDocumentException("overenie platnosti podpisového certifikátu časovej pečiatky voči času" +
                     " UtcNow a voči platnému poslednému CRL (nenasiel sa certifikat s " + signerSerialNum + " seriovym cislom");
         }
+
+        // podpisovy certifikat: http://test.ditec.sk/DTCCACrl/DTCCACrl.crl
+        URL url = new URL("http://test.ditec.sk/TSAServer/crl/dtctsa.crl");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setDoOutput(true);
+        con.setDoInput(true);
+
+        int responseCode = con.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new InvalidDocumentException("Nepodarilo sa ziskat CRL pre casovu peciatku");
+        }
+
+        ASN1InputStream asn1InputStream = new ASN1InputStream(con.getInputStream());
+        X509CRLHolder crlHolder = new X509CRLHolder(asn1InputStream);
+        // ASN1Primitive o = asn1InputStream.readObject();
+
+        Collection revokedCerts = crlHolder.getRevokedCertificates();
+        for (Object revokedCert : revokedCerts) {
+            X509CRLEntryHolder certificateHolder = (X509CRLEntryHolder) revokedCert;
+
+            if (Objects.equals(certificateHolder.getSerialNumber(), signerSerialNum)) {
+                throw new InvalidDocumentException("")
+            }
+        }
+
+        System.out.println("AHOJ");
     }
 
-    // TODO: all documents are valid according this rule
+    // NOTE: all documents are valid according this rule
     private void compareMessageImprintWithDsSignatureValue(TimeStampToken token, Element root) throws NoSuchAlgorithmException, InvalidDocumentException {
         // no need to check if dsSignatureValue is null, because it was checked in checkDsSignatureValue
         Element dsSignatureValue = (Element) root.selectSingleNode("//*[name() = 'ds:SignatureValue']");

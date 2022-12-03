@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="getting signerCert from timestamp token">
+    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="overenie Ds:Manifest elementov - Done">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/OvereniePodpisu.doc" beforeDir="false" afterPath="$PROJECT_DIR$/OvereniePodpisu.doc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -81,7 +80,7 @@
       <workItem from="1669745375688" duration="10904000" />
       <workItem from="1670053780575" duration="12125000" />
       <workItem from="1670065977671" duration="2822000" />
-      <workItem from="1670080104315" duration="7281000" />
+      <workItem from="1670080104315" duration="15066000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -125,7 +124,14 @@
       <option name="project" value="LOCAL" />
       <updated>1670068759848</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="overenie Ds:Manifest elementov - Done">
+      <created>1670089587318</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1670089587318</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -149,13 +155,39 @@
     <MESSAGE value="overnie ds:Manifest elementov - ds:Manifest Id, ds:Transforms and ds:DigestMethod" />
     <MESSAGE value="check MessageImprint and SignatureValue" />
     <MESSAGE value="getting signerCert from timestamp token" />
-    <option name="LAST_COMMIT_MESSAGE" value="getting signerCert from timestamp token" />
+    <MESSAGE value="overenie Ds:Manifest elementov - Done" />
+    <option name="LAST_COMMIT_MESSAGE" value="overenie Ds:Manifest elementov - Done" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/JChecker.java</url>
+          <line>262</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/JChecker.java</url>
+          <line>246</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/JChecker.java</url>
+          <line>251</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/JChecker.java</url>
+          <line>257</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="org.bouncycastle.asn1.x509.Certificate" memberName="sig" />
         <PinnedItemInfo parentTag="org.bouncycastle.util.CollectionStore" memberName="_local" />
+        <PinnedItemInfo parentTag="org.bouncycastle.asn1.DLSequence" memberName="elements" />
         <PinnedItemInfo parentTag="org.bouncycastle.tsp.TimeStampToken" memberName="tstInfo" />
         <PinnedItemInfo parentTag="org.bouncycastle.tsp.TimeStampToken" memberName="tsaSignerInfo" />
       </pinned-members>
