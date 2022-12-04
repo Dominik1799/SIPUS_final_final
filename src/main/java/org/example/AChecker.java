@@ -1,17 +1,26 @@
 package org.example;
 
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.cert.X509CRLEntryHolder;
+import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.tsp.TimeStampToken;
+import org.bouncycastle.util.encoders.Base32;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.security.NoSuchProviderException;
 import java.security.cert.*;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 public class AChecker implements Checker{
     Document document;
@@ -20,7 +29,8 @@ public class AChecker implements Checker{
     final String ERR_MSG_02 = "obidva ds:SignatureProperty musia mať atribút Target nastavený na ds:Signature";
     final String ERR_MSG_03 = "ds:KeyInfo musí obsahovať ds:X509Data, ktorý obsahuje elementy: ds:X509Certificate, ds:X509IssuerSerial, ds:X509SubjectName";
     final String ERR_MSG_04 = "hodnoty elementov ds:X509IssuerSerial a ds:X509SubjectName nesúhlasia s príslušnými hodnatami v certifikáte, ktorý sa nachádza v ds:X509Certificate";
-    final String ERR_MSG_05 = "podpisový certifikát dokumentu nie je platný voči času T z časovej pečiatky ";
+    final String ERR_MSG_05 = "podpisový certifikát dokumentu nie je platný voči času T z časovej pečiatky";
+    final String ERR_MSG_06 = "podpisový certifikát dokumentu nie je platný voči platnému poslednému CRL";
 
     public AChecker(Document document) {
         this.document = document;
@@ -50,7 +60,7 @@ public class AChecker implements Checker{
             Element dsX509Certificate = getElementByParent(dsX509Data, "ds:X509Certificate");
             Element dsX509IssuerSerial = getElementByParent(dsX509Data, "ds:X509IssuerSerial");
 
-            byte[] decoded = Base64.getDecoder().decode(dsX509Certificate.getText().getBytes());
+            byte[] decoded = org.bouncycastle.util.encoders.Base64.decode(dsX509Certificate.getText().getBytes());
             cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(decoded));
 
             issuerName = getElementByParent(dsX509IssuerSerial, "ds:X509IssuerName").getText();
@@ -117,8 +127,21 @@ public class AChecker implements Checker{
             TimeStampToken timestamp = loadTimeStampToken();
             cert.checkValidity(timestamp.getTimeStampInfo().getGenTime());
 
+            X509CRLHolder crlHolder = getCrlData();
+            Collection<?> revokedCerts = crlHolder.getRevokedCertificates();
+            for (Object revokedCert : revokedCerts) {
+                X509CRLEntryHolder certificateHolder = (X509CRLEntryHolder) revokedCert;
+                BigInteger revokedCertSerialNum = certificateHolder.getSerialNumber();
+
+                if (Objects.equals(revokedCertSerialNum, cert.getSerialNumber())) {
+                    throw new InvalidDocumentException(ERR_MSG_06);
+                }
+            }
+
         } catch (CertificateException e) {
             throw new InvalidDocumentException(ERR_MSG_05);
+       } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -152,5 +175,21 @@ public class AChecker implements Checker{
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    private X509CRLHolder getCrlData() throws IOException, InvalidDocumentException {
+        URL url = new URL("http://test.ditec.sk/TSAServer/crl/dtctsa.crl");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setDoOutput(true);
+        con.setDoInput(true);
+
+        int responseCode = con.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new InvalidDocumentException("Nepodarilo sa ziskat CRL pre casovu peciatku");
+        }
+
+        ASN1InputStream asn1InputStream = new ASN1InputStream(con.getInputStream());
+        return new X509CRLHolder(asn1InputStream);
     }
 }
