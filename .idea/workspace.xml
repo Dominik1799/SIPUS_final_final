@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="getting revokedCertificated, but not sure if this is the right approach">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/OvereniePodpisu.doc" beforeDir="false" afterPath="$PROJECT_DIR$/OvereniePodpisu.doc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/JChecker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Main.java" afterDir="false" />
-    </list>
+    <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -40,18 +35,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/jakub/IdeaProjects/SIPUS_final_final&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;Console&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "C:/Users/jakub/IdeaProjects/SIPUS_final_final",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "Console"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\dunco\IdeaProjects\SIPUS_final_final" />
@@ -83,7 +79,7 @@
       <workItem from="1670053780575" duration="12125000" />
       <workItem from="1670065977671" duration="2822000" />
       <workItem from="1670080104315" duration="15247000" />
-      <workItem from="1670139865399" duration="4879000" />
+      <workItem from="1670139865399" duration="5272000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -141,7 +137,14 @@
       <option name="project" value="LOCAL" />
       <updated>1670099176025</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne">
+      <created>1670145685304</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1670145685305</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -167,7 +170,8 @@
     <MESSAGE value="getting signerCert from timestamp token" />
     <MESSAGE value="overenie Ds:Manifest elementov - Done" />
     <MESSAGE value="getting revokedCertificated, but not sure if this is the right approach" />
-    <option name="LAST_COMMIT_MESSAGE" value="getting revokedCertificated, but not sure if this is the right approach" />
+    <MESSAGE value="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne" />
+    <option name="LAST_COMMIT_MESSAGE" value="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne" />
   </component>
   <component name="XDebuggerManager">
     <pin-to-top-manager>
