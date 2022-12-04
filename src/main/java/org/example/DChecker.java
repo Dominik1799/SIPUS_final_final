@@ -42,7 +42,7 @@ public class DChecker implements Checker {
             // first check if required references exist
             Element r = (Element) reference;
             if (r.attribute("Type") == null || !referenceExistenceCheck.containsKey(r.attribute("Type").getValue())
-            || r.attribute("URI") == null) {
+                    || r.attribute("URI") == null) {
                 throw new InvalidDocumentException(ERROR_MSG);
             }
             // set flag for correct type
