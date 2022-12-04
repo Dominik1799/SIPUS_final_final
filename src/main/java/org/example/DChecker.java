@@ -15,10 +15,73 @@ public class DChecker implements Checker {
     }
 
     public void startCheck() throws InvalidDocumentException {
-        this.checkSignedInfoReferences();
-        this.checkRootAttributes();
-        this.checkValidAlgorithmURI();
+        this.checkSignedInfoReferenceExistence(); // zle doku 7,9
+        this.checkSignedInfoReferences(); // zle doku 3
+        this.checkRootAttributes(); // zle doku 1
+        this.checkValidAlgorithmURI(); // zle doku 2
     }
+
+    // NOTE: element xades:DataObjectType neexistuje aj ked podla prirucky tam je. mozno je mysleny element xades:DataObjectFormat?
+    // zle dokumenty: 7 a 9
+    public void checkSignedInfoReferenceExistence() throws InvalidDocumentException {
+        String ERROR_MSG = "Overenie existencie referencií v ds:SignedInfo a hodnôt atribútov Id a Type voci profilu XAdES_ZEP pre ds:KeyInfo, ds:SignatureProperties, xades:SignedProperties. Všetky ostatné referencie v rámci ds:SignedInfo musia byť referenciami na ds:Manifest elementy";
+        HashMap<String, Boolean> referenceExistenceCheck = new HashMap<>();
+        referenceExistenceCheck.put("http://www.w3.org/2000/09/xmldsig#Object", Boolean.FALSE);
+        referenceExistenceCheck.put("http://www.w3.org/2000/09/xmldsig#SignatureProperties", Boolean.FALSE);
+        referenceExistenceCheck.put("http://uri.etsi.org/01903#SignedProperties", Boolean.FALSE);
+        referenceExistenceCheck.put("http://www.w3.org/2000/09/xmldsig#Manifest", Boolean.FALSE);
+        HashMap<String, String> expectedElementsCheck = new HashMap<>();
+        expectedElementsCheck.put("http://www.w3.org/2000/09/xmldsig#Object", "ds:KeyInfo");
+        expectedElementsCheck.put("http://www.w3.org/2000/09/xmldsig#SignatureProperties", "ds:SignatureProperties");
+        expectedElementsCheck.put("http://uri.etsi.org/01903#SignedProperties", "xades:SignedProperties");
+        expectedElementsCheck.put("http://www.w3.org/2000/09/xmldsig#Manifest", "ds:Manifest");
+        Element root = this.document.getRootElement();
+        Element signedInfo = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo']");
+        List<Node> references = signedInfo.selectNodes("//ds:SignedInfo/ds:Reference");
+        for (Node reference : references) {
+            // first check if required references exist
+            Element r = (Element) reference;
+            if (r.attribute("Type") == null || !referenceExistenceCheck.containsKey(r.attribute("Type").getValue())
+                    || r.attribute("URI") == null) {
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+            // set flag for correct type
+            referenceExistenceCheck.put(r.attribute("Type").getValue(), Boolean.TRUE);
+            // now check if it points to a correct element
+            String query = String.format("//*[@Id = '%s']", r.attribute("URI").getValue().replace("#", ""));
+            Element referencedElement = (Element) root.selectSingleNode(query);
+            // reference element has attribute Type. if this attribute points to correct element, continue. if not, throw exception
+            if (referencedElement == null || !referencedElement.getQualifiedName().equals(expectedElementsCheck.get(r.attribute("Type").getValue()))) {
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+            // now check if Id of a reference is correctly referenced by xades:DataObjectFormat element
+            // but only for manifest type, other objects are not referenced
+            if (!expectedElementsCheck.get(r.attribute("Type").getValue()).equals("ds:Manifest")) {
+                continue;
+            }
+            query = String.format("//*[@ObjectReference = '#%s']", r.attribute("Id").getValue());
+            Element referencingElement = (Element) root.selectSingleNode(query);
+            if (referencingElement == null || !referencingElement.getQualifiedName().equals("xades:DataObjectFormat")){
+                // this might not be necessary??
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+        }
+        // now check referenceExistenceCheck if all flags are set to true
+        // however, maybe ds:Manifest does not have to exist in document? unclear in specification, thats why its
+        // separate if condition, so we can easily delete it
+        for (String key : referenceExistenceCheck.keySet()) {
+            // if we did not find this type of reference, throw error
+            if (!referenceExistenceCheck.get(key)) {
+                // uncomment this if condition if ds:Manifest element is not necessary
+//                if (key.equals("http://www.w3.org/2000/09/xmldsig#Manifest")) {
+//                    continue;
+//                }
+                throw new InvalidDocumentException(ERROR_MSG);
+            }
+        }
+    }
+
+
 
     private void checkSignedInfoReferences() throws InvalidDocumentException {
         String ERROR_MSG = "kontrola obsahu ds:Transforms a ds:DigestMethod vo všetkých referenciách v ds:SignedInfo – musia obsahovať URI niektorého z podporovaných algoritmov podľa profilu XAdES_ZEP";
