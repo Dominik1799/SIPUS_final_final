@@ -19,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.*;
 
 public class JChecker implements Checker{
@@ -29,11 +30,13 @@ public class JChecker implements Checker{
         this.document = document;
     }
 
+    // valid: 1, 2, 3, 4, 7, 8, 9, 11, 12
+    // not valid: 5, 6, 10
     @Override
     public void startCheck() throws InvalidDocumentException, IOException, NoSuchAlgorithmException, TSPException {
-        // checkDsSignature();
-        // checkDsSignatureValue();
-        // checkDsManifestElements();
+        checkDsSignature();
+        checkDsSignatureValue();
+        checkDsManifestElements();
         checkTimestamp();
     }
 
@@ -77,8 +80,6 @@ public class JChecker implements Checker{
         }
     }
 
-    // not valid:
-    // valid: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
     // specifikacia strana 27
     private void checkDsManifestElements() throws InvalidDocumentException {
         Element root =  this.document.getRootElement();
@@ -206,12 +207,10 @@ public class JChecker implements Checker{
 
         String base64TimestampToken = encapsulatedTimeStamp.getStringValue();
         byte[] decodedTimestampToken = Base64.getDecoder().decode(base64TimestampToken);
-        // it is only possible to get token from bytes
+        // The only possibility how to get token is from bytes
         TimeStampToken token = new TimeStampToken(ContentInfo.getInstance(decodedTimestampToken));
 
-        // TODO: overit overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow a voči platnému poslednému CRL
         checkSignedCertValidity(token);
-
         compareMessageImprintWithDsSignatureValue(token, root);
     }
 
@@ -235,6 +234,16 @@ public class JChecker implements Checker{
                     " UtcNow a voči platnému poslednému CRL (nenasiel sa certifikat s " + signerSerialNum + " seriovym cislom");
         }
 
+        Instant instantNow = Instant.now();
+        Date timeStampGenTime = token.getTimeStampInfo().getGenTime();
+        Date endDate = signerCert.getNotAfter();
+
+        // TODO: wtf - why do we need to check timestamp to UtcNow
+//        if (instantNow.isAfter(endDate.toInstant())) {
+//            throw new InvalidDocumentException("overenie platnosti podpisového certifikátu časovej pečiatky voči času" +
+//                    " UtcNow a voči platnému poslednému CRL (platnost certifikatu: " + signerSerialNum + " vyprsala");
+//        }
+
         // podpisovy certifikat: http://test.ditec.sk/DTCCACrl/DTCCACrl.crl
         URL url = new URL("http://test.ditec.sk/TSAServer/crl/dtctsa.crl");
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -251,16 +260,18 @@ public class JChecker implements Checker{
         X509CRLHolder crlHolder = new X509CRLHolder(asn1InputStream);
         // ASN1Primitive o = asn1InputStream.readObject();
 
-        Collection revokedCerts = crlHolder.getRevokedCertificates();
+        Collection<?> revokedCerts = crlHolder.getRevokedCertificates();
         for (Object revokedCert : revokedCerts) {
             X509CRLEntryHolder certificateHolder = (X509CRLEntryHolder) revokedCert;
+            BigInteger revokedCertSerialNum = certificateHolder.getSerialNumber();
+            Date revokeDate = certificateHolder.getRevocationDate();
 
-            if (Objects.equals(certificateHolder.getSerialNumber(), signerSerialNum)) {
-                throw new InvalidDocumentException("")
+            // if signerCert is in CRL and revoke time is before timestamp, then whole xml isn't valid
+            if (Objects.equals(revokedCertSerialNum, signerSerialNum) && revokeDate.before(timeStampGenTime)) {
+                throw new InvalidDocumentException("overenie platnosti podpisového certifikátu časovej pečiatky" +
+                        " voči času UtcNow a voči platnému poslednému CRL. (certifikát sa nachádza v CRL a v case vytvorenia casovej peciatky bol neplatny)");
             }
         }
-
-        System.out.println("AHOJ");
     }
 
     // NOTE: all documents are valid according this rule

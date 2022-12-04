@@ -28,6 +28,9 @@ public class Main {
             // start checking
             // dChecker.startCheck();
             // aChecker.startCheck();
+
+            // valid: 1, 2, 3, 4, 7, 8, 9, 11, 12
+            // not valid: 5, 6, 10
             jChecker.startCheck();
             // mChecker.startCheck();
 
