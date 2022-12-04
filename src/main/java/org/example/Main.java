@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
 //kniznica: https://dom4j.github.io/
 //priklady: https://www.tutorialspoint.com/java_xml/java_dom4j_parse_document.htm
 public class Main {
-    private final static String XML_FILE = "priklady/12XadesT.xml";
+    private final static String XML_FILE = "priklady/03XadesT.xml";
     public static void main(String[] args) {
         try {
             // init
@@ -31,8 +31,8 @@ public class Main {
 
             // valid: 1, 2, 3, 4, 7, 8, 9, 11, 12
             // not valid: 5, 6, 10
-            jChecker.startCheck();
-            // mChecker.startCheck();
+            // jChecker.startCheck();
+            mChecker.startCheck();
 
             // if we get here, no exceptions occured == document is valid
             System.out.println("Dokument je platny");

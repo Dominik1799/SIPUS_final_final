@@ -6,12 +6,18 @@ import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.util.encoders.Base64;
+import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
+import org.w3c.dom.Attr;
+
 import java.security.PublicKey;
 import java.security.Signature;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.bouncycastle.asn1.ASN1Primitive.fromByteArray;
 
@@ -24,7 +30,8 @@ public class MChecker implements Checker {
 
     @Override
     public void startCheck() throws InvalidDocumentException {
-        checkDsSignatureValue();
+        // checkDsSignatureValue();
+        checkDsManifestReferences();
     }
 
     private byte[] canonicalize(Element signedInfoN, String alg) {
@@ -35,13 +42,11 @@ public class MChecker implements Checker {
     private void checkDsSignatureValue() throws InvalidDocumentException {
         Element root = this.document.getRootElement();
         Element dsSignatureValue = (Element) root.selectSingleNode("//*[name() = 'ds:SignatureValue']");
-        String certificateData = root.selectSingleNode("//*[name() = 'ds:KeyInfo/ds:X509Data/ds:X509Certificate']").getStringValue();
+        Element dsCertificate = (Element) root.selectSingleNode("//*[name() = 'ds:X509Certificate']");
         Element signatureMethod = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo/ds:SignatureMethod']");
         Element signedInfoN = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo']");
-        String signedInfoTransformAlg = root.selectSingleNode("//*[name() = 'ds:SignedInfo/ds:CanonicalizationMethod']").getStringValue();
-        byte[] objSignedInfoOld = this.canonicalize(signedInfoN, signedInfoTransformAlg);
-        byte[] objSignedInfoNew = this.canonicalize(signedInfoN, signedInfoTransformAlg);
-
+        Element dsCanonicalizationMethod = (Element) root.selectSingleNode("//*[name() = 'ds:CanonicalizationMethod']");
+        // byte[] objSignedInfoOld = this.canonicalize(signedInfoN, dsCanonicalizationMethod.getStringValue());
 
         String ERROR_MSG = "";
 
@@ -49,9 +54,20 @@ public class MChecker implements Checker {
             throw new InvalidDocumentException("Chýba ds:SignatureValue element");
         }
 
-        if (certificateData == null) {
+        if (dsCertificate == null) {
             throw new InvalidDocumentException("Chýba ds:X509Certificate element v ds:KeyInfo");
         }
+
+        if (dsCanonicalizationMethod == null) {
+            throw new InvalidDocumentException("Chýba ds:CanonicalizationMethod element v ds:SignedInfo");
+        }
+
+        // Attribute dsX509Certificate = dsCertificate.attribute("ds:X509Certificate");
+
+        String certificateData = dsCertificate.getStringValue();
+        System.out.println(dsCertificate);
+
+        byte[] objSignedInfoNew = this.canonicalize(signedInfoN, dsCanonicalizationMethod.getStringValue());
 
         try
         {
@@ -107,5 +123,45 @@ public class MChecker implements Checker {
             ERROR_MSG = "verifySign 10: " + ex;
             throw new InvalidDocumentException(ERROR_MSG);
         }
+    }
+
+    private void checkDsManifestReferences() throws InvalidDocumentException {
+        Element root = this.document.getRootElement();
+        List<Node> manifestNodes = root.selectNodes("//*[name() = 'ds:Manifest']");
+
+        for (Node manifestNode : manifestNodes) {
+            // check if manifest has Id attribute
+            Element manifest = (Element) manifestNode;
+            Attribute manifestId = manifest.attribute("Id");
+
+            if (manifestId == null || manifestId.getValue().equals("")) {
+                throw new InvalidDocumentException("každý ds:Manifest element musí mať Id atribút");
+            }
+
+            List<Node> referenceNodes = manifest.selectNodes("ds:Reference");
+            if (referenceNodes.size() != 1) {
+                throw new InvalidDocumentException("každý ds:Manifest element musí obsahovať práve jednu referenciu na ds:Object");
+            }
+            Element reference = (Element) referenceNodes.get(0);
+
+            checkDsDigestValue(reference);
+        }
+    }
+
+    private void checkDsDigestValue(Element reference) throws InvalidDocumentException {
+        Element dsDigestValue = (Element) reference.selectSingleNode("ds:DigestValue");
+        Attribute referenceURI = reference.attribute("URI");
+
+        if (dsDigestValue == null) {
+            throw new InvalidDocumentException("Chýba hodnota ds:DigestValue");
+        }
+
+        if (referenceURI == null) {
+            throw new InvalidDocumentException("Chýba URI hodnota v ds:Manifest referencii");
+        }
+
+        String decodedDigestValue = dsDigestValue.getStringValue();
+        System.out.println(decodedDigestValue);
+        System.out.println(referenceURI.getValue());
     }
 }
