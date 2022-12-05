@@ -4,8 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+
+    <list default="true" id="38285c12-f9e0-402f-9a2d-916dec0d0ffb" name="Changes" comment="dominik HARD task assign">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/AChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/AChecker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Main.java" afterDir="false" />
+
     <list default="true" id="acacfad6-bc57-4c7e-869e-6adbfcec00e0" name="Changes" comment="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +46,14 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/dunco/IdeaProjects/SIPUS_final_final&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
+
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
@@ -48,6 +63,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;Console&quot;
+
   }
 }</component>
   <component name="RecentsManager">
@@ -78,10 +94,14 @@
       <option name="presentableId" value="Default" />
       <updated>1669745373432</updated>
       <workItem from="1669745375688" duration="10904000" />
+
+      <workItem from="1670186358257" duration="2990000" />
+
       <workItem from="1670053780575" duration="12125000" />
       <workItem from="1670065977671" duration="2822000" />
       <workItem from="1670080104315" duration="15247000" />
       <workItem from="1670139865399" duration="5272000" />
+
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1669746912512</created>
@@ -176,6 +196,42 @@
     <option name="LAST_COMMIT_MESSAGE" value="vsetko hotove okrem: overenie platnosti podpisového certifikátu časovej pečiatky voči času UtcNow, nechapem, preco to vobec potrebujeme, ked sa pouziva CRL a ako to pouzit, aby to bolo vobec prospesne" />
   </component>
   <component name="XDebuggerManager">
+
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/DChecker.java</url>
+          <line>45</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/DChecker.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/DChecker.java</url>
+          <line>78</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/DChecker.java</url>
+          <line>65</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/AChecker.java</url>
+          <line>74</line>
+          <option name="timeStamp" value="69" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/AChecker.java</url>
+          <line>75</line>
+          <option name="timeStamp" value="70" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="org.bouncycastle.cert.X509CRLHolder" memberName="x509CRL" />
