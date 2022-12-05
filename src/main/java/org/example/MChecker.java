@@ -1,5 +1,7 @@
 package org.example;
 
+import org.apache.xml.security.c14n.CanonicalizationException;
+import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
@@ -10,13 +12,14 @@ import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.w3c.dom.Attr;
+import org.apache.xml.security.c14n.Canonicalizer;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.security.Signature;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.bouncycastle.asn1.ASN1Primitive.fromByteArray;
@@ -39,12 +42,12 @@ public class MChecker implements Checker {
         return bytes;
     }
 
-    private void checkDsSignatureValue() throws InvalidDocumentException {
+    private void checkDsSignatureValue() throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException {
         Element root = this.document.getRootElement();
         Element dsSignatureValue = (Element) root.selectSingleNode("//*[name() = 'ds:SignatureValue']");
         Element dsCertificate = (Element) root.selectSingleNode("//*[name() = 'ds:X509Certificate']");
         Element signatureMethod = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo/ds:SignatureMethod']");
-        Element signedInfoN = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo']");
+        Element dsSignedInfo = (Element) root.selectSingleNode("//*[name() = 'ds:SignedInfo']");
         Element dsCanonicalizationMethod = (Element) root.selectSingleNode("//*[name() = 'ds:CanonicalizationMethod']");
         // byte[] objSignedInfoOld = this.canonicalize(signedInfoN, dsCanonicalizationMethod.getStringValue());
 
@@ -67,7 +70,11 @@ public class MChecker implements Checker {
         String certificateData = dsCertificate.getStringValue();
         System.out.println(dsCertificate);
 
-        byte[] objSignedInfoNew = this.canonicalize(signedInfoN, dsCanonicalizationMethod.getStringValue());
+        // kanonikalizacia ds:SignedInfo
+        Canonicalizer canon = Canonicalizer.getInstance(dsCanonicalizationMethod.getStringValue());
+        byte[] objSignedInfoNew = canon.canonicalize(Base64.decode(dsSignedInfo.getStringValue()));
+
+        //byte[] objSignedInfoNew = this.canonicalize(signedInfoN, dsCanonicalizationMethod.getStringValue());
 
         try
         {
