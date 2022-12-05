@@ -1,24 +1,30 @@
 package org.example;
 
+import org.apache.xml.security.Init;
+
+
+import org.apache.xml.security.c14n.CanonicalizationException;
+import org.apache.xml.security.c14n.Canonicalizer;
+import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.cert.X509CRLEntryHolder;
 import org.bouncycastle.cert.X509CRLHolder;
-import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.tsp.TimeStampToken;
-import org.bouncycastle.util.encoders.Base32;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.security.NoSuchProviderException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
 import java.util.*;
 
@@ -110,7 +116,58 @@ public class AChecker implements Checker{
 
     // dereferencovanie URI, kanonikalizácia referencovaných ds:Manifest elementov a overenie hodnôt odtlačkov ds:DigestValue
     private void checkReferencedElemsAndDigestVal() throws InvalidDocumentException {
+        Element root = this.document.getRootElement();
+        List<Node> referenceNodes = root.selectNodes("//ds:SignedInfo/ds:Reference");
 
+        //Init.init();
+
+        if (referenceNodes.size() == 0) {
+            throw new InvalidDocumentException("ds:SignedInfo neobsahuje ds:Reference elementy");
+        }
+        for (Node refNode : referenceNodes) {
+            Element reference = (Element) refNode;
+            String uri = reference.attribute("URI").getValue().substring(1);
+
+            Element manifestElement = getElementByAttributeValue("ds:Manifest", "Id", uri);
+
+            if (manifestElement == null) {
+                continue;
+            }
+
+            byte[] manifestBytes = manifestElement.asXML().getBytes();
+            String dsDigestValue = getElementByParent(reference, "ds:DigestValue").getStringValue();
+            String algoType = getElementByParent(reference, "ds:DigestMethod").attribute("Algorithm").getValue();
+            String refAlgo = getAlgorithm(algoType);
+
+            if (refAlgo.equals(null)) {
+                throw new InvalidDocumentException("ds:SignedInfo oobsahuje referenciu na neexistujuci algoritmus");
+            }
+
+            Element transformElement = getElementByParent(manifestElement, "ds:Transform");
+            String algo = transformElement.attribute("Algorithm").getValue();
+            algo = getAlgorithm(algo);
+
+            /*try {
+                Canonicalizer canonicalizer = Canonicalizer.getInstance(algo);
+                manifestBytes = canonicalizer.canonicalize(manifestBytes);
+            } catch (InvalidCanonicalizerException | CanonicalizationException | ParserConfigurationException |
+                     IOException | SAXException e) {
+                throw new InvalidDocumentException("Chyba pri kanonikalizácií");
+            }
+
+            MessageDigest messageDigest = null;
+
+            try {
+                messageDigest = MessageDigest.getInstance(refAlgo);
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidDocumentException("ds:SignedInfo oobsahuje referenciu na neexistujuci algoritmus");
+            }
+            String actualDigestValue = new String(org.bouncycastle.util.encoders.Base64.encode(messageDigest.digest(manifestBytes)));
+
+            if (!dsDigestValue.equals(actualDigestValue)) {
+                System.out.println("hodnota ds:DigestValue nesedí s hashom ds:Manifest elementu");
+            }*/
+        }
     }
 
 
@@ -142,6 +199,40 @@ public class AChecker implements Checker{
             throw new InvalidDocumentException(ERR_MSG_05);
        } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    private Element getElementByAttributeValue(String name, String atrib, String value) {
+        Element root = this.document.getRootElement();
+        List<Node> nodes = root.selectNodes("//" + name);
+
+        for (Node node : nodes) {
+            Element elem = (Element) node;
+            String id = elem.attribute(atrib).getValue();
+
+            if (id.equals(value)) {
+                return elem;
+            }
+        }
+        return null;
+    }
+
+    private String getAlgorithm(String algoType) {
+
+        switch (algoType) {
+            case "http://www.w3.org/2000/09/xmldsig#sha1":
+                return "SHA-1";
+            case "http://www.w3.org/2001/04/xmldsig-more#sha224":
+                return "SHA-224";
+            case "http://www.w3.org/2001/04/xmlenc#sha256":
+                return "SHA-256";
+            case "http://www.w3.org/2001/04/xmldsig-more#sha384":
+                return "SHA-384";
+            case "http://www.w3.org/2001/04/xmlenc#sha512":
+                return "SHA-512";
+            default:
+                return null;
         }
     }
 
