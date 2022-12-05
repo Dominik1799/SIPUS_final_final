@@ -79,7 +79,7 @@ public class AChecker implements Checker{
             throw new RuntimeException(e);
         }
         if (!subjectName.equals(cert.getSubjectX500Principal().toString()) ||
-            !serialNumber.equals(cert.getSerialNumber().toString()) || !compareIssuerName(issuerName, cert.getIssuerX500Principal().toString())) {
+                !serialNumber.equals(cert.getSerialNumber().toString()) || !compareIssuerName(issuerName, cert.getIssuerX500Principal().toString())) {
             throw new InvalidDocumentException(ERR_MSG_04);
         }
     }
@@ -257,6 +257,7 @@ public class AChecker implements Checker{
 
         return issuerName1.equals(issuerName2);
     }
+
 
     private TimeStampToken loadTimeStampToken() {
         try {
