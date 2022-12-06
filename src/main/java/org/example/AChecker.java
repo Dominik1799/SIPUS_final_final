@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
@@ -44,6 +45,7 @@ public class AChecker implements Checker{
 
     @Override
     public void startCheck() throws InvalidDocumentException {
+        org.apache.xml.security.Init.init();
         checkKeyInfo();
         checkSignatureProperties();
         checkReferencedElemsAndDigestVal();
@@ -119,22 +121,26 @@ public class AChecker implements Checker{
         Element root = this.document.getRootElement();
         List<Node> referenceNodes = root.selectNodes("//ds:SignedInfo/ds:Reference");
 
-        //Init.init();
-
         if (referenceNodes.size() == 0) {
             throw new InvalidDocumentException("ds:SignedInfo neobsahuje ds:Reference elementy");
         }
+        // iterujeme cez //ds:SignedInfo/ds:Reference nodes
         for (Node refNode : referenceNodes) {
+
+            // pre každý z reference elementov nájdeme URI
             Element reference = (Element) refNode;
             String uri = reference.attribute("URI").getValue().substring(1);
 
+            // nájdeme ds:Manifest element s rovnakým URI
             Element manifestElement = getElementByAttributeValue("ds:Manifest", "Id", uri);
 
             if (manifestElement == null) {
                 continue;
             }
 
-            byte[] manifestBytes = manifestElement.asXML().getBytes();
+            byte[] manifestBytes = manifestElement.asXML().getBytes(StandardCharsets.UTF_8);
+
+            // zistenie algoritmu podla ktoreho budeme hashovať referencovaný ds:Manifest element
             String dsDigestValue = getElementByParent(reference, "ds:DigestValue").getStringValue();
             String algoType = getElementByParent(reference, "ds:DigestMethod").attribute("Algorithm").getValue();
             String refAlgo = getAlgorithm(algoType);
@@ -145,27 +151,28 @@ public class AChecker implements Checker{
 
             Element transformElement = getElementByParent(manifestElement, "ds:Transform");
             String algo = transformElement.attribute("Algorithm").getValue();
-            algo = getAlgorithm(algo);
 
-            /*try {
-                Canonicalizer canonicalizer = Canonicalizer.getInstance(algo);
-                manifestBytes = canonicalizer.canonicalize(manifestBytes);
-            } catch (InvalidCanonicalizerException | CanonicalizationException | ParserConfigurationException |
-                     IOException | SAXException e) {
-                throw new InvalidDocumentException("Chyba pri kanonikalizácií");
+            if (algo.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315")) {
+                try {
+                    Canonicalizer canonicalizer = Canonicalizer.getInstance(algo);
+                    manifestBytes = canonicalizer.canonicalize(manifestBytes);
+                } catch (InvalidCanonicalizerException | CanonicalizationException | ParserConfigurationException |
+                         IOException | SAXException e) {
+                    throw new InvalidDocumentException("Chyba pri kanonikalizácií");
+                }
             }
 
-            MessageDigest messageDigest = null;
+            MessageDigest messageDigest;
 
             try {
                 messageDigest = MessageDigest.getInstance(refAlgo);
             } catch (NoSuchAlgorithmException e) {
                 throw new InvalidDocumentException("ds:SignedInfo oobsahuje referenciu na neexistujuci algoritmus");
             }
-            String actualDigestValue = new String(org.bouncycastle.util.encoders.Base64.encode(messageDigest.digest(manifestBytes)));
+            String hashed = new String(org.bouncycastle.util.encoders.Base64.encode(messageDigest.digest(manifestBytes)));
 
-            if (!dsDigestValue.equals(actualDigestValue)) {
-                System.out.println("hodnota ds:DigestValue nesedí s hashom ds:Manifest elementu");
+            /*if (!dsDigestValue.equals(hashed)) {
+                throw new InvalidDocumentException("hodnota ds:DigestValue nesedí s hashom referencovaného ds:Manifest elementu");
             }*/
         }
     }
