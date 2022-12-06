@@ -3,13 +3,8 @@ package org.example;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.xml.security.c14n.CanonicalizationException;
 import org.apache.xml.security.c14n.InvalidCanonicalizerException;
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.util.encoders.Base64;
@@ -18,9 +13,7 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.apache.xml.security.c14n.Canonicalizer;
-import org.w3c.dom.Attr;
 import org.xml.sax.SAXException;
-import org.w3c.dom.*;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
@@ -31,11 +24,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
-
-
-import static org.bouncycastle.asn1.ASN1Primitive.fromByteArray;
 
 public class MChecker implements Checker {
     Document document;
@@ -79,8 +68,8 @@ public class MChecker implements Checker {
 
         // kanonikalizacia ds:SignedInfo
         Canonicalizer canon = Canonicalizer.getInstance(canonicalizationAlg);
-        byte[] aa = dsSignedInfo.asXML().getBytes(StandardCharsets.UTF_8);
-        byte[] objSignedInfoNew = canon.canonicalize(aa);
+        byte[] dsSignedInfoBytes = dsSignedInfo.asXML().getBytes(StandardCharsets.UTF_8);
+        byte[] objSignedInfoNew = canon.canonicalize(dsSignedInfoBytes);
 
         // SubjectPublicKeyInfo ski = SubjectPublicKeyInfo.getInstance(fromByteArray(certificateData.getBytes()));
         // SubjectPublicKeyInfo ski = X509CertificateStructure.getInstance(ASN1Object.fromByteArray(certificateData)).SubjectPublicKeyInfo;
@@ -101,18 +90,12 @@ public class MChecker implements Checker {
             throw new InvalidDocumentException("verifySign 5: Unknown key algId = ");
         }
 
-        // PublicKey publicKey = KeyFactory.getInstance("DSA").generatePublic(new X509EncodedKeySpec(certificateData.getEncoded()));
-
         X509Certificate cert;
         Element root2 = this.document.getRootElement();
         Element dsX509Certificate = getElementByParent(root2, "ds:X509Certificate");
 
         byte[] decoded = Base64.decode(dsX509Certificate.getText().getBytes());
         cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(decoded));
-
-/*        byte[] keyBytes = Base64.decode(certificateData.getBytes(StandardCharsets.UTF_8));
-        ASN1Sequence ASN1 = ASN1Sequence.getInstance(keyBytes);
-        X509CertificateStructure x509 = X509CertificateStructure.getInstance(keyBytes);*/
 
         SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(SubjectPublicKeyInfo.getInstance(ASN1Primitive.fromByteArray(dsX509Certificate.getText().getBytes())).parsePublicKey());
         AsymmetricKeyParameter publicKey = PublicKeyFactory.createKey(publicKeyInfo);
