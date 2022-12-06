@@ -18,7 +18,6 @@ dependencies {
     //implementation group: 'xml-security', name: 'xmlsec', version: '1.0.5D2'
     implementation 'org.apache.santuario:xmlsec:2.0.4'
 
-
 }
 
 test {
