@@ -4,6 +4,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.xml.security.c14n.CanonicalizationException;
 import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -19,14 +20,20 @@ import org.dom4j.Node;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.w3c.dom.Attr;
 import org.xml.sax.SAXException;
+import org.w3c.dom.*;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
+
 
 import static org.bouncycastle.asn1.ASN1Primitive.fromByteArray;
 
@@ -38,13 +45,13 @@ public class MChecker implements Checker {
     }
 
     @Override
-    public void startCheck() throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, InvalidKeySpecException {
+    public void startCheck() throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, InvalidKeySpecException, CertificateException {
         org.apache.xml.security.Init.init();
-        checkDsSignatureValue();
-        //checkDsManifestReferences();
+        // checkDsSignatureValue();
+        checkDsManifestReferences();
     }
 
-    private void checkDsSignatureValue() throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException {
+    private void checkDsSignatureValue() throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, CertificateException {
         Element root = this.document.getRootElement();
         Element dsSignatureValue = (Element) root.selectSingleNode("//*[name() = 'ds:SignatureValue']");
         Element dsCertificate = (Element) root.selectSingleNode("//*[name() = 'ds:X509Certificate']");
@@ -80,26 +87,9 @@ public class MChecker implements Checker {
         //SubjectPublicKeyInfo ski = SubjectPublicKeyInfo.getInstance(certificateData.getBytes(StandardCharsets.UTF_8));
         //AsymmetricKeyParameter publicKey = PublicKeyFactory.createKey(ski);
 
-        String algStr = ""; //signature alg
-
         System.out.println(signatureMethod.attribute("Algorithm"));
 
-        //find digest
-        switch (signatureMethod.attribute("Algorithm").getValue())
-        {
-            case "http://www.w3.org/2000/09/xmldsig#rsa-sha1":
-                algStr = "sha1";
-                break;
-            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256":
-                algStr = "sha256";
-                break;
-            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384":
-                algStr = "sha384";
-                break;
-            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512":
-                algStr = "sha512";
-                break;
-        }
+        String algStr = getAlgorithm(signatureMethod.attribute("Algorithm").getValue());
 
         //find encryption
         String algorithmId = "1.2.840.10040.4.1";
@@ -113,15 +103,23 @@ public class MChecker implements Checker {
 
         // PublicKey publicKey = KeyFactory.getInstance("DSA").generatePublic(new X509EncodedKeySpec(certificateData.getEncoded()));
 
-        byte[] keyBytes = Base64.decode(certificateData.getBytes(StandardCharsets.UTF_8));
+        X509Certificate cert;
+        Element root2 = this.document.getRootElement();
+        Element dsX509Certificate = getElementByParent(root2, "ds:X509Certificate");
+
+        byte[] decoded = Base64.decode(dsX509Certificate.getText().getBytes());
+        cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(decoded));
+
+/*        byte[] keyBytes = Base64.decode(certificateData.getBytes(StandardCharsets.UTF_8));
         ASN1Sequence ASN1 = ASN1Sequence.getInstance(keyBytes);
-        X509CertificateStructure x509 = X509CertificateStructure.getInstance(keyBytes);
-        SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(x509);
-        AsymmetricKeyParameter pk = PublicKeyFactory.createKey(publicKeyInfo);
+        X509CertificateStructure x509 = X509CertificateStructure.getInstance(keyBytes);*/
+
+        SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(SubjectPublicKeyInfo.getInstance(ASN1Primitive.fromByteArray(dsX509Certificate.getText().getBytes())).parsePublicKey());
+        AsymmetricKeyParameter publicKey = PublicKeyFactory.createKey(publicKeyInfo);
 
         byte[] sig = Base64.decode(dsSignatureValue.getStringValue());
         Signature signer = Signature.getInstance(algStr);
-        signer.initVerify((PublicKey) pk);
+        signer.initVerify((PublicKey) publicKey);
         signer.update(Base64.encode(objSignedInfoNew));
         Boolean res = signer.verify(sig);
         if (!res)
@@ -152,52 +150,99 @@ public class MChecker implements Checker {
             // TODO: dereferencovanie URI -> transformacia podla daneho algoritmu ->
             // TODO: DigestMethod -> DigestValue porovnat s vyslednou hodnotou
 
-            checkDsDigestValue(reference);
+            // dereferencovanie URI
+            String uri = reference.attribute("URI").getValue().substring(1);
+            uri = "Manifest" + uri;
+            Element manifestElement = getElementByAttributeValue("ds:Manifest", "Id", uri);
+
+            if (manifestElement == null) {
+                continue;
+            }
+
+            checkReference(manifestElement);
         }
     }
 
-    private void checkDsDigestValue(Element reference) throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException {
-        Element dsTransform = (Element) reference.selectSingleNode("ds:Transforms/ds:Transform");
-        Attribute referenceURI = reference.attribute("URI");
-
-        if (dsTransform == null) {
-            throw new InvalidDocumentException("Chýba hodnota ds:Transform");
-        }
-
-        if (referenceURI == null) {
-            throw new InvalidDocumentException("Chýba URI hodnota v ds:Manifest referencii");
-        }
-
+    private void checkReference(Element reference) throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException {
+        Element dsTransform = getElementByParent(reference, "ds:Transform");
         String transformAlg = dsTransform.attribute("Algorithm").getValue();
-        byte[] transformedData = Base64.decode("Object201403250803212VerificationObject");
 
-/*        // ak je transformacny algoritmus kanonikalizacia
+        byte[] transformedData = new byte[0];
+        byte[] referenceBytes = reference.asXML().getBytes(StandardCharsets.UTF_8);
+
+        // ak je transformacny algoritmus kanonikalizacia
         if (transformAlg.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315")) {
             Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
-            transformedData = canon.canonicalize(Base64.decode(referenceURI.getValue()));
+            transformedData = canon.canonicalize(referenceBytes);
         }
         // ak referencovaný objekt obsahuje len element s base64 kódovanými dátami
         else if (transformAlg.equals("http://www.w3.org/2000/09/xmldsig#base64")) {
             Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
-            transformedData = canon.canonicalize(Base64.decode(referenceURI.getValue()));
-        }*/
+            transformedData = canon.canonicalize(referenceBytes);
+        }
 
-        Element dsDigestMethod = (Element) reference.selectSingleNode("ds:DigestMethod");
-        String digestAlg = dsDigestMethod.attribute("Algorithm").getValue();
-
-        // myDigestValue = digestAlg -> transformedData
+        String algoType = getElementByParent(reference, "ds:DigestMethod").attribute("Algorithm").getValue();
 
         String myDigestValue = "";
 
-        if (digestAlg.equals("http://www.w3.org/2001/04/xmlenc#sha256")) {
-            myDigestValue = DigestUtils.sha256Hex(transformedData);
+        if (algoType.equals("http://www.w3.org/2001/04/xmlenc#sha1")) {
+            myDigestValue = Base64.toBase64String(DigestUtils.sha1(transformedData));
+        }
+        else if (algoType.equals("http://www.w3.org/2001/04/xmlenc#sha256")) {
+            myDigestValue = Base64.toBase64String(DigestUtils.sha256(transformedData));
+        }
+        else if (algoType.equals("http://www.w3.org/2001/04/xmldsig-more#sha384")) {
+            myDigestValue = Base64.toBase64String(DigestUtils.sha384(transformedData));
+        }
+        else if (algoType.equals("http://www.w3.org/2001/04/xmlenc#sha512")) {
+            myDigestValue = Base64.toBase64String(DigestUtils.sha512(transformedData));
         }
 
-        Element dsDigestValue = (Element) reference.selectSingleNode("ds:DigestValue");
+        String dsDigestValue = getElementByParent(reference, "ds:DigestValue").getStringValue();
 
         System.out.println("myDigestValue = " + myDigestValue);
-        System.out.println("dsDigestValue = " + dsDigestValue.getStringValue());
+        System.out.println("dsDigestValue = " + dsDigestValue);
 
+/*        if (!myDigestValue.equals(dsDigestValue)) {
+            throw new InvalidDocumentException("ds:DigestValue má nesprávnu hodnotu.");
+        }*/
+    }
 
+    private Element getElementByAttributeValue(String name, String atrib, String value) {
+        Element root = this.document.getRootElement();
+        List<Node> nodes = root.selectNodes("//" + name);
+
+        for (Node node : nodes) {
+            Element elem = (Element) node;
+            String id = elem.attribute(atrib).getValue();
+
+            if (id.equals(value)) {
+                return elem;
+            }
+        }
+        return null;
+    }
+
+    private Element getElementByParent(Element parent, String elemName) throws InvalidDocumentException {
+        Element element = (Element) parent.selectSingleNode("//*[name() = '" + elemName + "']");
+        if (element == null) {
+            throw new InvalidDocumentException("Chýba " + elemName + " element");
+        }
+        return element;
+    }
+
+    private String getAlgorithm(String algType) {
+        switch (algType)
+        {
+            case "http://www.w3.org/2000/09/xmldsig#rsa-sha1":
+                return "sha1";
+            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256":
+                return "sha256";
+            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384":
+                return "sha384";
+            case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512":
+                return "sha512";
+        }
+        return "";
     }
 }

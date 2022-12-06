@@ -15,12 +15,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
 //kniznica: https://dom4j.github.io/
 //priklady: https://www.tutorialspoint.com/java_xml/java_dom4j_parse_document.htm
 public class Main {
-    private final static String XML_FILE = "priklady/10XadesT.xml";
+    private final static String XML_FILE = "priklady/03XadesT.xml";
     public static void main(String[] args) {
         try {
             // init
@@ -56,6 +57,8 @@ public class Main {
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
             e.printStackTrace();
         }
 
