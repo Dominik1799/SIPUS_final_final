@@ -130,13 +130,13 @@ public class MChecker implements Checker {
             }
             Element reference = (Element) referenceNodes.get(0);
 
-            // TODO: dereferencovanie URI -> transformacia podla daneho algoritmu ->
+            // TODO: dereferencovanie URI -> transformacia podla daneho algoritmu v ds:Transform ->
             // TODO: DigestMethod -> DigestValue porovnat s vyslednou hodnotou
 
             // dereferencovanie URI
             String uri = reference.attribute("URI").getValue().substring(1);
-            uri = "Manifest" + uri;
-            Element manifestElement = getElementByAttributeValue("ds:Manifest", "Id", uri);
+            // uri = "Manifest" + uri;
+            Element manifestElement = getElementByAttributeValue("ds:Object", "Id", uri);
 
             if (manifestElement == null) {
                 continue;
@@ -147,21 +147,27 @@ public class MChecker implements Checker {
     }
 
     private void checkReference(Element reference) throws InvalidDocumentException, InvalidCanonicalizerException, CanonicalizationException, ParserConfigurationException, IOException, SAXException {
-        Element dsTransform = getElementByParent(reference, "ds:Transform");
-        String transformAlg = dsTransform.attribute("Algorithm").getValue();
+        List<Node> transformNodes = reference.selectNodes("ds:Transforms");
 
+        byte[] inputBytes = reference.asXML().getBytes(StandardCharsets.UTF_8);
         byte[] transformedData = new byte[0];
-        byte[] referenceBytes = reference.asXML().getBytes(StandardCharsets.UTF_8);
 
-        // ak je transformacny algoritmus kanonikalizacia
-        if (transformAlg.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315")) {
-            Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
-            transformedData = canon.canonicalize(referenceBytes);
-        }
-        // ak referencovaný objekt obsahuje len element s base64 kódovanými dátami
-        else if (transformAlg.equals("http://www.w3.org/2000/09/xmldsig#base64")) {
-            Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
-            transformedData = canon.canonicalize(referenceBytes);
+        for (Node transformNode : transformNodes) {
+            Element transform = (Element) transformNode;
+            // Element dsTransform = getElementByParent(reference, "ds:Transform");
+            String transformAlg = transform.attribute("Algorithm").getValue();
+
+            // ak je transformacny algoritmus kanonikalizacia
+            if (transformAlg.equals("http://www.w3.org/TR/2001/REC-xml-c14n-20010315")) {
+                Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
+                transformedData = canon.canonicalize(inputBytes);
+            }
+            // ak referencovaný objekt obsahuje len element s base64 kódovanými dátami
+            else if (transformAlg.equals("http://www.w3.org/2000/09/xmldsig#base64")) {
+                Canonicalizer canon = Canonicalizer.getInstance(transformAlg);
+                transformedData = canon.canonicalize(inputBytes);
+            }
+            inputBytes = transformedData;
         }
 
         String algoType = getElementByParent(reference, "ds:DigestMethod").attribute("Algorithm").getValue();
